@@ -155,15 +155,38 @@ if errorlevel 1 (
 
 REM === Do NOT rebuild Tauri on every launch. It is slow and the built app can be reused. ===
 REM To manually rebuild the desktop app after code changes, run: start.bat /build
+REM On a fresh clone there is no lmworld.exe yet, so build it once automatically.
+call :CHECK_DESKTOP_EXE
 if /i "%~1"=="/build" (
     call :TRY_BUILD_TAURI
     if errorlevel 1 (
         echo [lmWorld] Build failed. Continuing to launch the last available app/dev fallback.
     )
+) else if not defined EXE_FOUND (
+    echo [lmWorld] Desktop app missing. Building it once for this fresh checkout...
+    call :TRY_BUILD_TAURI
+    if errorlevel 1 (
+        echo [lmWorld] Build failed. Continuing to dev server fallback.
+    )
 ) else (
-    echo [lmWorld] Skipping desktop rebuild. Use start.bat /build when you want to rebuild the bundled UI.
+    echo [lmWorld] Existing desktop app found. Skipping rebuild. Use start.bat /build when you want to rebuild the bundled UI.
 )
 goto :DONE_BUILD_CHECK
+:CHECK_DESKTOP_EXE
+set "EXE_FOUND="
+for %%p in (
+    "%ROOT%\frontend\src-tauri\target\release\lmworld.exe"
+    "%ROOT%\frontend\src-tauri\target\x86_64-pc-windows-msvc\release\lmworld.exe"
+    "%ROOT%\frontend\src-tauri\target\i686-pc-windows-msvc\release\lmworld.exe"
+    "%ROOT%\lmworld\lmworld.exe"
+    "%ROOT%\lmworld.exe"
+) do (
+    if exist "%%~p" (
+        set "EXE_FOUND=%%~p"
+        exit /b 0
+    )
+)
+exit /b 0
 
 :TRY_BUILD_TAURI
 set "EXE_COUNT=0"
@@ -195,22 +218,7 @@ exit /b 0
 
 REM Try to launch the desktop app first (bundled UI)
 echo [lmWorld] Checking for desktop app (lmworld.exe)...
-set "EXE_FOUND="
-
-for %%p in (
-    "%ROOT%\frontend\src-tauri\target\release\lmworld.exe"
-    "%ROOT%\frontend\src-tauri\target\x86_64-pc-windows-msvc\release\lmworld.exe"
-    "%ROOT%\frontend\src-tauri\target\i686-pc-windows-msvc\release\lmworld.exe"
-    "%ROOT%\lmworld\lmworld.exe"
-    "%ROOT%\lmworld.exe"
-) do (
-    if exist "%%~p" (
-        set "EXE_FOUND=%%~p"
-        goto :FOUND_EXE
-    )
-)
-
-:FOUND_EXE
+call :CHECK_DESKTOP_EXE
 if defined EXE_FOUND (
     echo [lmWorld] Launching desktop app: %EXE_FOUND%
     start "" "%EXE_FOUND%"

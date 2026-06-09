@@ -75,8 +75,8 @@ The launcher will:
 5. Install backend dependencies from `backend/requirements.txt`.
 6. Start FastAPI on `127.0.0.1:8001`.
 7. Reuse an existing desktop build when `lmworld.exe` is present.
-8. Install frontend dependencies if the dev fallback needs them.
-9. Start the Next.js dev server at `http://localhost:3000` when no desktop build exists.
+8. Build the Tauri desktop app once automatically when no `lmworld.exe` exists.
+9. Fall back to the Next.js dev server at `http://localhost:3000` only if the desktop build fails.
 
 To build or rebuild the Tauri desktop app manually, run:
 
