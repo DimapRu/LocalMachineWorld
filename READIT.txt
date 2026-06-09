@@ -1,0 +1,89 @@
+READIT stack (board)
+
+Purpose
+This file is the current implementation board for the lmWorld runtime/orchestration stack. Status values:
+- wired: implemented in the current app, even if the implementation is an internal equivalent rather than the exact upstream package.
+- planned: intentionally not implemented yet; the app exposes hooks or adjacent infrastructure first.
+
+llama.cpp
+wired
+GGUF fallback via llama-server is wired. The backend RuntimeDispatcher tries Ollama first, then falls back to llama.cpp/llama-server for unsupported HF/GGUF models. llama-server instances support CPU/GPU layer split through n_gpu_layers-style configuration and are managed from the local Ollama/llama.cpp binaries.
+Relevant implementation: backend/app/services/runtime.py, backend/app/services/llamacpp.py, backend/app/routers/agents.py.
+
+vllm
+planned
+Planned high-VRAM runtime option for larger deployments. Current app focuses first on runtime status hooks, runtime memory registry, Ollama routing, and llama.cpp fallback. No vLLM server adapter is wired yet.
+
+llama.swap
+wired
+Implemented as practical model residency and unload controls rather than the external llama-swap package. Ollama models are warmed/evicted with keep_alive, llama.cpp instances are started/stopped as llama-server processes, and runtime unload/reset hooks are exposed through backend system/runtime-memory routes.
+Relevant implementation: backend/app/services/runtime_memory.py, backend/app/services/director_tools.py, backend/app/routers/runtime_memory.py, backend/app/routers/system.py.
+
+langgraph
+wired
+Mapped to the backend Director/Worker monitor cycle instead of the LangGraph package: scan Board tasks, delegate executable work, create isolated Worker sessions, run inference/tool loops, write progress/audit logs, and review/update Board status.
+Relevant implementation: backend/app/services/agent_worker.py, backend/app/services/worker_factory.py, backend/app/services/director_tools.py, backend/app/services/board_tools.py, backend/app/routers/chat.py.
+
+letta.memory
+wired
+Represented as persistent project memory rather than the external Letta SDK: Board tasks, per-task/task-thread context, backend logs, Worker audit logs, runtime-memory registry, and compact Director context summaries are persisted and injected into Director/Worker prompts.
+Relevant implementation: backend/app/services/task_context.py, backend/app/services/backend_logs.py, backend/app/services/worker_audit.py, backend/app/services/runtime_memory.py, backend/app/models.py.
+
+mcp
+wired
+Built-in local MCP-like file and terminal tools are wired. The backend exposes safe REST endpoints for read/write/edit/list/delete/terminal, Worker tools expose read_file/write_file/list_dir/delete_file/run_command/log_progress/ask_director/submit_result, and tool activity is instrumented for the Board dispatcher UI.
+Relevant implementation: backend/app/routers/mcp.py, backend/app/services/worker_tools.py, backend/app/services/worker_fs.py, backend/app/services/activity.py, frontend/src/components/TasksPage.tsx.
+
+mcp server
+planned
+Real external MCP server / mcp-sdk integration is planned. Current lmWorld implementation is backend-owned local MCP-like tooling, not a standalone external MCP server process and not a full MCP client/server bridge yet.
+
+Additional current project data
+
+Tauri + Next.js frontend
+wired
+The UI is a Tauri v2 desktop shell with a Next.js 14/React/TypeScript frontend. Main screens include Office, Chat/Director, Hire Agent, Agent Profile, Board/Tasks, Tools, and Settings. start.bat starts local services and rebuilds the Tauri bundle so the bundled UI is refreshed on launch.
+Relevant implementation: frontend/src/components, frontend/src-tauri, frontend/package.json, start.bat.
+
+FastAPI backend + SQLite
+wired
+The backend is FastAPI with async SQLAlchemy/SQLite. Startup initializes/migrates tables, seeds tools, loads saved settings such as Hugging Face token, clears Worker startup audit logs, and starts the background AgentWorker loop.
+Relevant implementation: backend/app/main.py, backend/app/database.py, backend/app/models.py, backend/app/seed.py.
+
+Director orchestration tools
+wired
+The Director has native orchestration and memory tools: delegate_task, read_file_context, board mutation tools, load_model, unload_model/model_gc-style controls. For code/file/build/run requests, the Director is prompted to delegate to an isolated Worker instead of solving directly in chat.
+Relevant implementation: backend/app/routers/chat.py, backend/app/services/director_tools.py, backend/app/services/worker_factory.py.
+
+Worker native tools
+wired
+Worker agents can receive OpenAI-compatible native tool schemas and execute safe backend-owned tools with permissions. Always-on progress/result tools keep Workers able to log progress and submit final summaries even with limited permissions.
+Relevant implementation: backend/app/services/worker_tools.py, backend/app/services/worker_audit.py.
+
+Text-tool fallback
+wired
+Models without native tool support can still work through a backend text-tool protocol. The Worker prompt instructs fallback models to emit exactly one JSON tool call per response, and the parser can extract multiple JSON blocks defensively so submit_result is not lost when a weak model outputs several blocks at once.
+Relevant implementation: backend/app/services/agent_worker.py, backend/app/services/runtime.py.
+
+Tool support warning
+wired
+Ollama model scanning calls /api/show and checks the model template for {{ .Tools }} or {{.Tools}}. The Hire Agent UI receives supports_tools and displays a warning icon/tooltip for models that will use unstable text-tool fallback instead of native tools.
+Relevant implementation: backend/app/services/ollama.py, backend/app/routers/models.py, frontend/src/components/HirePage.tsx.
+
+Runtime dispatcher status / Board activity UI
+wired
+The Board page shows dispatcher status, active model/runtime/task, current tool activity, recent events, resources, and READIT integration summaries from backend activity state.
+Relevant implementation: backend/app/services/activity.py, backend/app/routers/system.py, frontend/src/components/TasksPage.tsx.
+
+OS-aware agent prompts
+wired
+Agent OS context can be auto-detected or manually configured. Director/Worker prompts receive OS-specific shell/path guidance so tool commands match the host environment.
+Relevant implementation: backend/app/services/agent_os.py, backend/app/routers/system.py, frontend/src/components/SettingsPage.tsx.
+
+Hugging Face / GGUF hiring path
+wired
+Hire Agent can search/select HF/GGUF-style models, normalize pull targets, pull via Ollama when possible, or download GGUF files for llama-server fallback when Ollama rejects the architecture.
+Relevant implementation: frontend/src/components/HirePage.tsx, backend/app/routers/huggingface.py, backend/app/routers/agents.py, backend/app/services/huggingface.py, backend/app/services/llamacpp.py.
+
+Known documentation note
+PROJECT_STATUS.md and parts of README.md/docs/ARCHITECTURE.md are older than the current implementation. Current source code shows Director->Worker delegation, runtime dispatch, Worker tool loops, audit logs, WebSocket/activity updates, and llama.cpp fallback are already wired.
