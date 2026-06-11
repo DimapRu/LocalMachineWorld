@@ -2,6 +2,12 @@
 
 Local desktop orchestrator for AI agents: Director + Workers, Board tasks, local model runtimes, tool execution, and runtime memory controls.
 
+## Preview
+
+![lmWorld Office dashboard](picture/office.png)
+
+![lmWorld Board dispatcher](picture/board.png)
+
 ## What This Project Does
 
 lmWorld runs a local AI-agent office:
