@@ -27,6 +27,7 @@ Director/Worker behavior is not baked into model weights. A downloaded model sta
 - Backend: Python 3.11+, FastAPI, async SQLAlchemy, SQLite, Uvicorn.
 - Frontend: Next.js 14, React 18, TypeScript, TailwindCSS.
 - Desktop shell: Tauri v2 / Rust.
+- UI: plain dark theme with default Tailwind styling (no custom gradients or animations).
 - Local runtimes: Ollama first, llama.cpp / llama-server fallback.
 - Model catalog/downloads: Hugging Face API, Ollama pulls, GGUF downloads.
 - Monitoring: psutil, GPUtil/pynvml.
@@ -58,7 +59,7 @@ Use `backend/.env.example` as the safe template for local settings. Keep `HF_TOK
 For development from a fresh clone:
 
 - Windows 10/11 recommended for `start.bat`.
-- Python 3.11+ available as `python`.
+- Python 3.11+ available as `python` (3.13 works too; dependency versions are not pinned strictly).
 - Node.js 18+ and npm.
 - Rust toolchain only when building the Tauri desktop app with `start.bat /build`.
 - Internet access for npm/pip packages and Ollama/model downloads.
@@ -90,9 +91,19 @@ To build or rebuild the Tauri desktop app manually, run:
 start.bat /build
 ```
 
+## Quick Start On Linux / macOS
+
+```bash
+./start.sh
+```
+
+The script creates `backend/.venv`, installs backend dependencies, runs `npm install` if needed, starts the backend on `127.0.0.1:8001` and the frontend dev server on `http://localhost:3000`. Ollama is not downloaded automatically here: install it yourself from https://ollama.com and run `ollama serve`.
+
+The frontend talks to the backend on port **8001**, so the backend must run on that port.
+
 ## Manual Development Start
 
-Backend:
+Backend (on Linux/macOS use `python3 -m venv .venv` and `.venv/bin/python` instead):
 
 ```bat
 cd backend
