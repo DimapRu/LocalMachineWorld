@@ -22,7 +22,7 @@ export default function Sidebar({ currentPage, onPageChange }: SidebarProps) {
   return (
     <aside className="fixed left-0 top-0 h-full w-64 bg-gray-900 border-r border-gray-800 flex flex-col z-50">
       <div className="p-6 border-b border-gray-800">
-        <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+        <h1 className="text-2xl font-bold text-white">
           lmWorld
         </h1>
         <p className="text-xs text-gray-500 mt-1">AI Agent Office</p>
@@ -38,11 +38,10 @@ export default function Sidebar({ currentPage, onPageChange }: SidebarProps) {
               onClick={() => onPageChange(item.id)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                 isActive
-                  ? `${item.color}/20 text-white border border-${item.color}/30`
-                  : `text-gray-400 ${item.hover} hover:text-white border border-transparent`
+                  ? "bg-gray-800 text-white border border-gray-700"
+                  : "text-gray-400 hover:bg-gray-800 hover:text-white border border-transparent"
               }`}
             >
-              <div className={`w-2 h-2 rounded-full ${item.color} ${isActive ? "animate-pulse" : ""}`} />
               <Icon size={20} />
               <span className="font-medium">{item.label}</span>
             </button>
@@ -54,7 +53,7 @@ export default function Sidebar({ currentPage, onPageChange }: SidebarProps) {
         <div className="bg-gray-800/50 rounded-lg p-3">
           <p className="text-xs text-gray-500">Status</p>
           <div className="flex items-center gap-2 mt-1">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            <div className="w-2 h-2 rounded-full bg-green-500 " />
             <span className="text-sm text-green-400">Online</span>
           </div>
         </div>
